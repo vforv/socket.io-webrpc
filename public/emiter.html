@@ -35,8 +35,8 @@
                 logger("Cam is ok")
             }
 
-            function loadFail() {
-                logger('Faild Cam')
+            function loadFail(err) {
+                logger('Faild Cam: ' + err)
             }
 
             function viewVideo(video, context) {

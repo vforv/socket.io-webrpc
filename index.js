@@ -1,9 +1,23 @@
 const express = require('express');
+const fs = require('fs');
 const app = new express();
-const http = require('http').Server(app);
-const io = require('socket.io')(http);
+const options = {
+    key: fs.readFileSync('./file.pem'),
+    cert: fs.readFileSync('./file.crt')
+};
+const https = require('https').createServer(options, app);
 
-const port = process.env.PORT || 3000;
+const http = require('http').Server(app);
+
+let io = require('socket.io')(https);
+
+if (process.env.PORT) {
+    io = require('socket.io')(http);
+}
+
+
+const port = process.env.PORT || 443;
+
 
 app.use(express.static(__dirname + "/public"));
 
@@ -15,8 +29,19 @@ io.on('connection', function (socket) {
     socket.on('stream', function (image) {
         socket.broadcast.emit('stream', image);
     })
+
+    socket.on('answer', function (image) {
+        socket.broadcast.emit('answer', image);
+    })
 })
 
-http.listen(port, function () {
-    console.log('Server started!')
-});
+
+if (!process.env.PORT) {
+    https.listen(port, function () {
+        console.log('Server started!')
+    });
+} else {
+    http.listen(port, function () {
+        console.log('Server started!')
+    });
+}

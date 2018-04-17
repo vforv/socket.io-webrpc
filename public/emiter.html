@@ -1,60 +1,61 @@
 <html>
-    <head>
-        <title>WebRPC</title>
-        <script src="https://code.jquery.com/jquery-1.11.2.min.js"></script>
-        <script type="text/javascript" src="/socket.io/socket.io.js"></script>
-    </head>
-    <body>
-        <h1>Emiter</h1>
 
-        <video src="" id="video" style="width: 680px;height: 320px;" autoplay="true"></video>
+<head>
+    <title>WebRPC</title>
+    <script src="https://code.jquery.com/jquery-1.11.2.min.js"></script>
+    <script type="text/javascript" src="/socket.io/socket.io.js"></script>
+</head>
 
-        <canvas id="preview"></canvas>
-        <div id="logger"></div>
+<body>
+    <h1>Emiter</h1>
 
-        <script type="text/javascript">
-            var canvas = document.getElementById("preview");
-            var context = canvas.getContext("2d");
+    <video src="" id="video" style="width: 680px;height: 320px;" muted="muted" autoplay="true"></video>
 
-            canvas.width = 800;
-            canvas.heigth = 600;
+    <div id="logger"></div>
 
-            context.width = canvas.width;
-            context.heigth = canvas.heigth;
+    <script type="text/javascript">
+        var video = document.getElementById('video');
 
-            var video = document.getElementById('video');
+        var socket = io();
 
-            var socket = io();
+        const peerConnection = new RTCPeerConnection();
+        
+        socket.on('answer', (message) => {
+            console.log(message)
+            peerConnection.setRemoteDescription(message)
+        })
 
-            function logger(msg) {
-                $("#logger").text(msg)
+        function loadCam(stream) {
+            video.srcObject = stream;
+
+            peerConnection.addStream(stream);
+
+            peerConnection.createOffer()
+                .then(sdp => peerConnection.setLocalDescription(sdp))
+                .then(() => {
+                    socket.emit('stream', peerConnection.localDescription);
+                })
+
+            logger("Cam is ok")
+        }
+
+        function loadFail(err) {
+            logger('Faild Cam: ' + err)
+        }
+
+        function logger(msg) {
+            $("#logger").text(msg)
+        }
+
+        $(function () {
+            navigator.getUserMedia = (navigator.getUserMedia || navigator.webkitGetUserMedia || navigator.mozGetUserMedia);
+
+            if (navigator.getUserMedia) {
+                navigator.getUserMedia({ video: true, audio: true }, loadCam, loadFail);
+
             }
+        });
+    </script>
+</body>
 
-            function loadCam(stream) {
-                video.src = window.URL.createObjectURL(stream)
-                logger("Cam is ok")
-            }
-
-            function loadFail(err) {
-                logger('Faild Cam: ' + err)
-            }
-
-            function viewVideo(video, context) {
-                context.drawImage(video, 0, 0, context.width, context.heigth)
-                socket.emit('stream', canvas.toDataURL('image/webp'));
-            }
-
-            $(function() {
-                navigator.getUserMedia = (navigator.getUserMedia || navigator.webkitGetUserMedia || navigator.mozGetUserMedia);
-
-                if(navigator.getUserMedia) {
-                    navigator.getUserMedia({video: true}, loadCam, loadFail)
-                }
-
-                setInterval(function() {
-                    viewVideo(video, context);
-                }, 70);
-            });
-        </script>
-    </body>
 </html>

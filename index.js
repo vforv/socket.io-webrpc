@@ -33,10 +33,13 @@ io.on('connection', function (socket) {
     })
 
     socket.on('answer-r', function (image) {
-        setTimeout(() => {
-            socket.broadcast.emit('answer-e', image);
-        }, 1000)
+        socket.broadcast.emit('answer-e', image);
     })
+
+    socket.on('candidate', function (message) {
+        socket.broadcast.emit('candidate', message);
+    });
+
 })
 
 

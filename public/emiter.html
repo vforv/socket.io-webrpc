@@ -18,13 +18,24 @@
 
         var socket = io();
 
-        const peerConnection = new RTCPeerConnection();
-        
+        const config = {
+            'iceServers': [
+                { 'urls': ['stun:stun.1.google.com:19302'] }
+            ]
+        }
+
+        const peerConnection = new RTCPeerConnection(config);
+
         socket.on('answer-e', (message) => {
             setTimeout(() => {
-            peerConnection.setRemoteDescription(message);
+                peerConnection.setRemoteDescription(message);
             }, 500)
         })
+
+        socket.on('candidate', function (candidate) {
+            const c = new RTCIceCandidate(candidate);
+            peerConnection.addIceCandidate(c);
+        });
 
         function loadCam(stream) {
             video.srcObject = stream;
@@ -36,6 +47,12 @@
                 .then(() => {
                     socket.emit('stream', peerConnection.localDescription);
                 })
+
+            peerConnection.onicecandidate = function (event) {
+                if (event.candidate) {
+                    socket.emit('candidate', event.candidate);
+                }
+            }
 
             logger("Cam is ok")
         }

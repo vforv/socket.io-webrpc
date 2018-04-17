@@ -15,7 +15,13 @@
 
     <script type="text/javascript">
         var socket = io();
-        const peerConnection = new RTCPeerConnection();
+        const config = {
+            'iceServers': [
+                { 'urls': ['stun:stun.1.google.com:19302'] }
+            ]
+        }
+
+        const peerConnection = new RTCPeerConnection(config);
         var video = document.getElementById('video');
 
         socket.on('stream', function (message) {
@@ -25,6 +31,21 @@
                 .then(() => {
                     socket.emit('answer-r', peerConnection.localDescription)
                 })
+
+            peerConnection.onaddstream = function (event) {
+                video.srcObject = event.stream;
+            };
+
+            peerConnection.onicecandidate = function (event) {
+                if (event.candidate) {
+                    socket.emit('candidate', event.candidate);
+                }
+            };
+        });
+
+        socket.on('candidate', function (id, candidate) {
+            peerConnection.addIceCandidate(new RTCIceCandidate(candidate))
+                .catch(e => console.error(e));
         });
 
         peerConnection.onaddstream = function (event) {

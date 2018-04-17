@@ -23,7 +23,7 @@
                 .then(() => peerConnection.createAnswer())
                 .then(sdp => peerConnection.setLocalDescription(sdp))
                 .then(() => {
-                    socket.emit('answer', peerConnection.localDescription)
+                    socket.emit('answer-r', peerConnection.localDescription)
                 })
         });
 

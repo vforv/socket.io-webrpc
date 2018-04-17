@@ -20,9 +20,10 @@
 
         const peerConnection = new RTCPeerConnection();
         
-        socket.on('answer', (message) => {
-            console.log(message)
-            peerConnection.setRemoteDescription(message)
+        socket.on('answer-e', (message) => {
+            setTimeout(() => {
+            peerConnection.setRemoteDescription(message);
+            }, 500)
         })
 
         function loadCam(stream) {
